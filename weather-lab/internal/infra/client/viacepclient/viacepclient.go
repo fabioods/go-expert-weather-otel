@@ -11,6 +11,8 @@ import (
 	"github.com/fabioods/go-expert-wheater-lab/configs"
 	"github.com/fabioods/go-expert-wheater-lab/pkg/errorformated"
 	"github.com/fabioods/go-expert-wheater-lab/pkg/trace"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 type ViaCepClient struct {
@@ -38,6 +40,7 @@ func (v *ViaCepClient) AddressByCep(ctx context.Context, cep string) (string, er
 		return "", errorformated.UnexpectedError(trace.GetTrace(), "error_creating_request", "error creating request: %v", err)
 	}
 
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return "", errorformated.UnexpectedError(trace.GetTrace(), "error_requesting_address", "error requesting address: %v", err)

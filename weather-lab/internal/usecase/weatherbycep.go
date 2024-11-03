@@ -6,6 +6,7 @@ import (
 	"github.com/fabioods/go-expert-wheater-lab/internal/domain"
 	"github.com/fabioods/go-expert-wheater-lab/internal/infra/client"
 	"github.com/fabioods/go-expert-wheater-lab/pkg/errorformated"
+	"github.com/fabioods/go-expert-wheater-lab/pkg/otel"
 	"github.com/fabioods/go-expert-wheater-lab/pkg/trace"
 )
 
@@ -38,13 +39,17 @@ func NewWeatherByCepUseCase(weatherClient client.WeatherClient, cepClient client
 }
 
 func (w *weatherByCepUseCase) Execute(context context.Context, input InputDTO) (OutputDTO, error) {
+	tracer := otel.TracerFromContext(context)
+	ctx, span := tracer.Start(context, "usecase")
+	defer span.End()
+
 	weather := domain.NewWeather()
 	err := weather.DefineCep(input.Cep)
 	if err != nil {
 		return OutputDTO{}, errorformated.UnprocesableEntityError(trace.GetTrace(), "invalid zipcode", err.Error())
 	}
 
-	city, err := w.cepClient.AddressByCep(context, input.Cep)
+	city, err := w.cepClient.AddressByCep(ctx, input.Cep)
 	if err != nil {
 		return OutputDTO{}, err
 	}
@@ -53,7 +58,7 @@ func (w *weatherByCepUseCase) Execute(context context.Context, input InputDTO) (
 		return OutputDTO{}, errorformated.NotFoundError(trace.GetTrace(), "city_not_found", "can not find zipcode: %s", input.Cep)
 	}
 
-	celsiusTemperature, err := w.weatherClient.WeatherByCity(context, city)
+	celsiusTemperature, err := w.weatherClient.WeatherByCity(ctx, city)
 	if err != nil {
 		return OutputDTO{}, err
 	}

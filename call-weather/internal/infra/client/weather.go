@@ -13,6 +13,8 @@ import (
 	"github.com/fabioods/go-expert-call-weather/internal/domain"
 	"github.com/fabioods/go-expert-call-weather/pkg/errorformated"
 	"github.com/fabioods/go-expert-call-weather/pkg/trace"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 type WeatherClient struct {
@@ -48,6 +50,7 @@ func (w *WeatherClient) WeatherByCep(ctx context.Context, cep string) (domain.Ce
 		return domain.Cep{}, errorformated.UnexpectedError(trace.GetTrace(), "error_creating_request", "error creating request: %v", err)
 	}
 
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return domain.Cep{}, errorformated.UnexpectedError(trace.GetTrace(), "error_requesting_address", "error requesting address: %v", err)

@@ -12,6 +12,8 @@ import (
 	"github.com/fabioods/go-expert-wheater-lab/configs"
 	"github.com/fabioods/go-expert-wheater-lab/pkg/errorformated"
 	"github.com/fabioods/go-expert-wheater-lab/pkg/trace"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 type WeatherClient struct {
@@ -47,6 +49,7 @@ func (w *WeatherClient) WeatherByCity(ctx context.Context, city string) (float64
 		return 0, errorformated.UnexpectedError(trace.GetTrace(), "error_creating_request", "error creating request: %v", err)
 	}
 
+	otel.GetTextMapPropagator().Inject(ctx, propagation.HeaderCarrier(req.Header))
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return 0, errorformated.UnexpectedError(trace.GetTrace(), "error_requesting_address", "error requesting address: %v", err)

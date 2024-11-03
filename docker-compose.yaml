@@ -23,7 +23,7 @@ services:
       - "9090:9090"
 
   otel-collector:
-    image: otel/opentelemetry-collector:latest
+    image: otel/opentelemetry-collector:0.74.0
     restart: always
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:

@@ -7,6 +7,7 @@ import (
 
 	"github.com/fabioods/go-expert-call-weather/internal/domain"
 	"github.com/fabioods/go-expert-call-weather/internal/infra/client"
+	"github.com/fabioods/go-expert-call-weather/pkg/otel"
 )
 
 type InputDTO struct {
@@ -53,7 +54,10 @@ func NewWeatherByCepUseCase(weatherClient client.WeatherByCepClient) *weatherByC
 }
 
 func (w *weatherByCepUseCase) Execute(context context.Context, input InputDTO) (domain.Cep, error) {
-	city, err := w.weatherClient.WeatherByCep(context, input.Cep)
+	tracer := otel.TracerFromContext(context)
+	ctx, span := tracer.Start(context, "usecase")
+	defer span.End()
+	city, err := w.weatherClient.WeatherByCep(ctx, input.Cep)
 	if err != nil {
 		return domain.Cep{}, err
 	}

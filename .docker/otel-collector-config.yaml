@@ -4,12 +4,12 @@ receivers:
       grpc:
 
 exporters:
-  otlp:
-    endpoint: jaeger-all-in-one:4317
+  jaeger:
+    endpoint: jaeger-all-in-one:14250  # Porta gRPC para o Jaeger
     tls:
       insecure: true
- 
   logging:
+    loglevel: debug
 
 processors:
   batch:
@@ -19,4 +19,4 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlp, logging]
+      exporters: [jaeger, logging]

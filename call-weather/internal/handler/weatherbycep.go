@@ -6,6 +6,7 @@ import (
 
 	"github.com/fabioods/go-expert-call-weather/internal/usecase"
 	"github.com/fabioods/go-expert-call-weather/pkg/errorformated"
+	"github.com/fabioods/go-expert-call-weather/pkg/otel"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -25,6 +26,10 @@ func NewWeatherByCepHandler(useCase usecase.WeatherByCepUseCase) *weatherByCepHa
 }
 
 func (h *weatherByCepHandler) Handle(w http.ResponseWriter, r *http.Request) {
+	tracer := otel.TracerFromContext(r.Context())
+	ctx, span := tracer.Start(r.Context(), "Handle")
+	defer span.End()
+
 	input := usecase.InputDTO{}
 
 	err := input.DefineCep(chi.URLParam(r, "cep"))
@@ -35,7 +40,7 @@ func (h *weatherByCepHandler) Handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	output, err := h.useCase.Execute(r.Context(), input)
+	output, err := h.useCase.Execute(ctx, input)
 	if err != nil {
 		statusCode := err.(*errorformated.ErrorFormated).StatusCode()
 		w.Header().Set("Content-Type", "application/json")
